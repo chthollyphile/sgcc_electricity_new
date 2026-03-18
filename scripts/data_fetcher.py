@@ -192,6 +192,8 @@ class DataFetcher:
 
             # --- 规避反爬 ---
             chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+            # 屏蔽 pv.sohu.com 追踪脚本，阻止浏览器指纹上报导致验证码 RK001 失败
+            chrome_options.add_argument("--host-resolver-rules=MAP pv.sohu.com 127.0.0.1")
             chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             chrome_options.add_experimental_option("useAutomationExtension", False)
             chrome_options.add_argument(
