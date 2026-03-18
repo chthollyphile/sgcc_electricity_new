@@ -165,6 +165,15 @@ class DataFetcher:
         time.sleep(random.uniform(0.05, 0.15))
         ActionChains(driver).release().perform()
 
+    def _hide_webdriver(self, driver):
+        """每次页面导航后调用，隐藏 navigator.webdriver 标志以规避反爬检测"""
+        try:
+            driver.execute_script(
+                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+            )
+        except Exception:
+            pass
+
     def insert_expand_data(self, data:dict):
         self.db.insert_expand_data(data)
                 
@@ -201,12 +210,18 @@ class DataFetcher:
                 service=service,
             )
             driver.implicitly_wait(self.DRIVER_IMPLICITY_WAIT_TIME)
+
+        # 显式设置窗口大小
+        driver.set_window_size(1920, 1080)
+        # 隐藏 webdriver
+        self._hide_webdriver(driver)
         return driver
 
     @ErrorWatcher.watch
     def _login(self, driver, phone_code = False):
         try:
             driver.get(LOGIN_URL)
+            self._hide_webdriver(driver)  # 重新注入
             WebDriverWait(driver, self.DRIVER_IMPLICITY_WAIT_TIME * 3).until(EC.visibility_of_element_located((By.CLASS_NAME, "user")))
         except:
             logging.debug(f"Login failed, open URL: {LOGIN_URL} failed.")
@@ -382,7 +397,7 @@ class DataFetcher:
         driver = self._get_webdriver()
         ErrorWatcher.instance().set_driver(driver)
         
-        driver.maximize_window() 
+        driver.set_window_size(1920, 1080)
         time.sleep(self.RETRY_WAIT_TIME_OFFSET_UNIT)
         logging.info("Webdriver initialized.")
         updator = SensorUpdator()
